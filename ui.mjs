@@ -1,6 +1,14 @@
 import {MARKUP as entryMarkup,CSS as entryCSS} from './entry-template.mjs';
 import {MARKUP as ordersMarkup,CSS as ordersCSS} from './orders-template.mjs';
 
+// Entry-only sizing trial: retain the QR visual center and the close hit area.
+const entrySizingCSS=`
+.screen.variant-D.dashboard .topbar>.qr-slot{left:1102.5px;top:26.984375px;width:60px;height:67px}
+.screen.variant-D.dashboard .topbar .qr{width:60px;height:60px;--ops-matte-radius:19.166667px}
+.screen.variant-D.dashboard .topbar .qr svg{width:48.333333px;height:48.333333px}
+.screen.variant-D.dashboard .topbar>.close svg{width:25px;height:25px}
+`;
+
 const mount=document.querySelector('#workspace');
 const states=['incoming','ready','completed','refund'];
 const sampleCounts=[1,4,6,8,8,8,7,5,3,0,0,0];
@@ -11,7 +19,7 @@ const pending=element=>{element.dataset.connection='pending';};
 function fit(){const scale=Math.min(1,mount.clientWidth/1280);host.style.height=624*scale+'px';q('.scale').style.transform=`scale(${scale})`;}
 function build(kind){
  observer?.disconnect();host=document.createElement('exops-ui-screen');host.dataset.page=kind;host.setAttribute('aria-label',kind==='entry'?'注文 入口':'注文一覧');root=host.attachShadow({mode:'open'});
- root.innerHTML=`<style>${kind==='entry'?entryCSS:ordersCSS}
+ root.innerHTML=`<style>${kind==='entry'?entryCSS+entrySizingCSS:ordersCSS}
  :host{display:block;position:relative;width:100%;height:624px;overflow:hidden;font-family:"EXOPS Entry Latin","EXOPS Entry Japanese",sans-serif}
  .scale{width:1280px;height:624px;transform-origin:top left}.screen{margin:0!important}
  .state-panel[hidden],.time-tiles[hidden],.order-card[hidden]{display:none!important}
