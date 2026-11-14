@@ -1,12 +1,9 @@
 import {MARKUP as entryMarkup,CSS as entryCSS} from './entry-template.mjs';
 import {MARKUP as ordersMarkup,CSS as ordersCSS} from './orders-template.mjs';
 
-// Entry-only sizing trial: retain the QR visual center and the close hit area.
+// Entry-only close sizing; the QR uses its original template dimensions.
 const entrySizingCSS=`
-.screen.variant-D.dashboard .topbar>.qr-slot{left:1102.5px;top:26.984375px;width:60px;height:67px}
-.screen.variant-D.dashboard .topbar .qr{width:60px;height:60px;--ops-matte-radius:19.166667px}
-.screen.variant-D.dashboard .topbar .qr svg{width:48.333333px;height:48.333333px}
-.screen.variant-D.dashboard .topbar>.close svg{width:25px;height:25px}
+.screen.variant-D.dashboard .topbar>.close svg{width:32px;height:32px}
 `;
 
 const mount=document.querySelector('#workspace');
