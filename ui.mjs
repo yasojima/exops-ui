@@ -1,5 +1,5 @@
 import {MARKUP as entryMarkup,CSS as entryCSS} from './entry-template.mjs';
-import {MARKUP as ordersMarkup,CSS as ordersCSS} from './orders-template.mjs?v=9d72aa68d84e';
+import {MARKUP as ordersMarkup,CSS as ordersCSS} from './orders-template.mjs?v=6bd264edb63a';
 
 // Entry-only close sizing; the QR uses its original template dimensions.
 const entrySizingCSS=`
@@ -91,7 +91,7 @@ function applySearch(){
  if(view.query)view.time='all';filterCards();
 }
 function refreshOrders(announce=true){
- const now=new Date();q('#updated-at').textContent=now.toLocaleTimeString('ja-JP',{hour12:false});
+ const now=new Date();q('#updated-at').textContent=now.toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
  q('#updated-at').dateTime=now.toISOString();filterCards();
  if(announce){
   const button=q('.list-refresh');button.classList.remove('is-refreshing');void button.offsetWidth;button.classList.add('is-refreshing');
