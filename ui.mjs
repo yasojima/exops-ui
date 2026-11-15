@@ -1,5 +1,5 @@
 import {MARKUP as entryMarkup,CSS as entryCSS} from './entry-template.mjs';
-import {MARKUP as ordersMarkup,CSS as ordersCSS} from './orders-template.mjs?v=3b7e98a47254';
+import {MARKUP as ordersMarkup,CSS as ordersCSS} from './orders-template.mjs?v=fe0f13180f78';
 
 // Entry-only close sizing; the QR uses its original template dimensions.
 const entrySizingCSS=`
@@ -80,6 +80,7 @@ function filterCards(){
   button.setAttribute('aria-label',`${button.dataset.time==='all'?'すべて':button.dataset.time+'から'} ${stateNames[orderState]} ${count}件`);
  });
  q('#result-description').textContent=(view.time==='all'?'すべての受取予定時刻':`受取 ${view.time}〜`)+(view.query?` ／ #${view.query}`:'');
+ q('#result-description').title=q('#result-description').textContent;
  q('.result-total b').textContent=matches.length;
  q('.segment-page-count b').textContent=view.page;q('.segment-page-count>span').textContent='/ '+pages;
  q('.segment-page-count').setAttribute('aria-label',`${pages}ページ中${view.page}ページ`);
