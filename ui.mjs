@@ -1,5 +1,5 @@
 import {MARKUP as entryMarkup,CSS as entryCSS} from './entry-template.mjs';
-import {MARKUP as ordersMarkup,CSS as ordersCSS} from './orders-template.mjs';
+import {MARKUP as ordersMarkup,CSS as ordersCSS} from './orders-template.mjs?v=cf74c83ddc16';
 
 // Entry-only close sizing; the QR uses its original template dimensions.
 const entrySizingCSS=`
@@ -8,6 +8,10 @@ const entrySizingCSS=`
 
 const mount=document.querySelector('#workspace');
 const states=['incoming','ready','completed','refund'];
+const stateNames={incoming:'準備中',ready:'準備完了',completed:'受渡済',refund:'返金・キャンセル'};
+const orderViews=Object.fromEntries(states.map(state=>[state,{time:'all',page:1,query:''}]));
+let orderState='incoming';
+const pageSize=12;
 const sampleCounts=[1,4,6,8,8,8,7,5,3,0,0,0];
 let date='2026-11-14',entryView='order',host,root,observer;
 const q=selector=>root.querySelector(selector);
@@ -51,19 +55,60 @@ function wireEntry(){
 }
 function activateState(state,focus=false){
  if(!states.includes(state))state='incoming';
+ orderState=state;
  qa('.order-state-tabs .page-tab').forEach(tab=>{const selected=tab.dataset.state===state;tab.classList.toggle('selected',selected);tab.setAttribute('aria-selected',String(selected));tab.tabIndex=selected?0:-1;if(selected&&focus)tab.focus();});
  qa('.selected-tab-paint').forEach(path=>path.setAttribute('display',path.dataset.state===state?'block':'none'));
  qa('.state-panel').forEach(panel=>panel.hidden=panel.dataset.state!==state);
- history.replaceState(null,'','#orders/'+state);filterCards();
+ history.replaceState(null,'','#orders/'+state);
+ q('#order-search').value=orderViews[state].query;
+ q('#list-heading').textContent=`2-${states.indexOf(state)+1}｜注文一覧：${stateNames[state]}`;
+ filterCards();
 }
-function filterCards(){const query=q('#order-search').value.trim().replace(/^#/,'');qa('.order-card').forEach(card=>card.hidden=Boolean(query&&!card.dataset.number.includes(query)));}
+function filterCards(){
+ const view=orderViews[orderState];
+ const cards=qa(`.state-panel[data-state="${orderState}"] .order-card`);
+ const matches=cards.filter(card=>(view.time==='all'||card.dataset.pickup===view.time)&&(!view.query||card.dataset.number.includes(view.query)));
+ const pages=Math.max(1,Math.ceil(matches.length/pageSize));
+ view.page=Math.max(1,Math.min(pages,view.page));
+ const visible=new Set(matches.slice((view.page-1)*pageSize,view.page*pageSize));
+ cards.forEach(card=>{card.hidden=!visible.has(card);});
+ qa('.time-filter').forEach(button=>{
+  const selected=button.dataset.time===view.time;
+  button.classList.toggle('selected',selected);button.setAttribute('aria-pressed',String(selected));
+  const count=button.dataset.time==='all'?cards.length:cards.filter(card=>card.dataset.pickup===button.dataset.time).length;
+  button.querySelector('.slot-count b').textContent=count;
+  button.setAttribute('aria-label',`${button.dataset.time==='all'?'すべて':button.dataset.time+'から'} ${stateNames[orderState]} ${count}件`);
+ });
+ q('#result-description').textContent=(view.time==='all'?'すべての受取予定時刻':`受取 ${view.time}〜`)+(view.query?` ／ #${view.query}`:'');
+ q('.result-total b').textContent=matches.length;
+ q('.segment-page-count b').textContent=view.page;q('.segment-page-count>span').textContent='/ '+pages;
+ q('.segment-page-count').setAttribute('aria-label',`${pages}ページ中${view.page}ページ`);
+ q('#orders-prev').disabled=view.page===1;q('#orders-next').disabled=view.page===pages;
+ q(`.state-panel[data-state="${orderState}"] .empty-orders`).hidden=matches.length!==0;
+}
+function applySearch(){
+ const view=orderViews[orderState];view.query=q('#order-search').value.trim().replace(/^#/,'');view.page=1;
+ if(view.query)view.time='all';filterCards();
+}
+function refreshOrders(announce=true){
+ const now=new Date();q('#updated-at').textContent=now.toLocaleTimeString('ja-JP',{hour12:false});
+ q('#updated-at').dateTime=now.toISOString();filterCards();
+ if(announce){
+  const button=q('.list-refresh');button.classList.remove('is-refreshing');void button.offsetWidth;button.classList.add('is-refreshing');
+  q('.update-announcement').textContent=`${stateNames[orderState]}の一覧を更新しました。${q('#updated-at').textContent}`;
+ }
+}
 function wireOrders(){
  const tabs=qa('.order-state-tabs .page-tab');tabs.forEach(tab=>tab.addEventListener('click',()=>activateState(tab.dataset.state)));keyboardTabs(tabs,(i,focus)=>activateState(states[i],focus));
  q('.page-two-close').addEventListener('click',()=>location.hash='entry');q('.page-two-close').setAttribute('aria-label','入口へ戻る');
- q('.search').addEventListener('submit',e=>{e.preventDefault();filterCards();});q('#order-search').addEventListener('input',e=>{if(!e.target.value)filterCards();});
- qa('.segment-page-arrow').forEach(button=>{button.disabled=false;button.classList.add('preview-page-arrow');pending(button);button.addEventListener('click',e=>e.preventDefault());});
+ q('#order-search').maxLength=12;
+ q('.search').addEventListener('submit',e=>{e.preventDefault();applySearch();});q('#order-search').addEventListener('input',e=>{if(!e.target.value)applySearch();});
+ qa('.time-filter').forEach(button=>button.addEventListener('click',()=>{const view=orderViews[orderState];view.time=button.dataset.time;view.page=1;filterCards();}));
+ qa('.segment-page-arrow').forEach((button,i)=>{button.classList.add('preview-page-arrow');button.addEventListener('click',()=>{orderViews[orderState].page+=i?1:-1;filterCards();});});
+ q('.list-refresh').addEventListener('click',()=>refreshOrders());
  pending(q('.qr'));qa('.order-card').forEach(pending);
  activateState(location.hash.split('/')[1]||'incoming');
+ refreshOrders(false);
 }
 function route(){const kind=location.hash.startsWith('#orders')?'orders':'entry';if(host?.dataset.page===kind){if(kind==='orders')activateState(location.hash.split('/')[1]);return;}build(kind);}
 window.addEventListener('hashchange',route);route();
