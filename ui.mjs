@@ -1,5 +1,5 @@
 import {MARKUP as entryMarkup,CSS as entryCSS} from './entry-template.mjs';
-import {MARKUP as ordersMarkup,CSS as ordersCSS} from './orders-template.mjs?v=6bd264edb63a';
+import {MARKUP as ordersMarkup,CSS as ordersCSS} from './orders-template.mjs?v=e6edd7ebd0a9';
 
 // Entry-only close sizing; the QR uses its original template dimensions.
 const entrySizingCSS=`
