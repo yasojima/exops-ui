@@ -112,3 +112,33 @@ function wireOrders(){
 }
 function route(){const kind=location.hash.startsWith('#orders')?'orders':'entry';if(host?.dataset.page===kind){if(kind==='orders')activateState(location.hash.split('/')[1]);return;}build(kind);}
 window.addEventListener('hashchange',route);route();
+
+// SRC-308: shared viewport readout from the original OPS shell.
+function mountViewportIndicator(){
+ if(document.getElementById('viewport-indicator'))return;
+ const indicator=document.createElement('output');
+ indicator.id='viewport-indicator';
+ indicator.className='viewport-indicator';
+ indicator.setAttribute('aria-label','ビューポート');
+ indicator.setAttribute('aria-live','off');
+ indicator.title='ブラウザの表示領域（CSS px）';
+ let frame=0;
+ const draw=()=>{
+  frame=0;
+  const viewport=window.visualViewport;
+  const width=viewport?.width||window.innerWidth,height=viewport?.height||window.innerHeight;
+  const rawZoom=getComputedStyle(document.documentElement).zoom;
+  const parsed=Number.parseFloat(rawZoom);
+  const zoom=Number.isFinite(parsed)&&parsed>0?(rawZoom.endsWith('%')?parsed/100:parsed):1;
+  indicator.textContent='ビューポート'+' '+Math.round(width)+' × '+Math.round(height)+' px';
+  indicator.style.left=(((viewport?.offsetLeft||0)+width)/zoom)+'px';
+  indicator.style.top=(((viewport?.offsetTop||0)+height)/zoom)+'px';
+ };
+ const schedule=()=>{if(!frame)frame=requestAnimationFrame(draw);};
+ document.body.append(indicator);
+ window.addEventListener('resize',schedule,{passive:true});
+ window.visualViewport?.addEventListener('resize',schedule,{passive:true});
+ window.visualViewport?.addEventListener('scroll',schedule,{passive:true});
+ draw();
+}
+mountViewportIndicator();
